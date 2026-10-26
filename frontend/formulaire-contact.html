@@ -1,0 +1,85 @@
+<!-- Formulaire de contact — fragment à coller dans la page du portfolio.
+     Les couleurs et polices sont héritées du site : seules les règles
+     indispensables sont posées ici. -->
+<style>
+  .contact-form { display: grid; gap: 1rem; max-width: 40rem; }
+  .contact-form label { display: grid; gap: 0.35rem; }
+  .contact-form input,
+  .contact-form textarea { font: inherit; color: inherit; padding: 0.6rem 0.75rem; }
+  .contact-form textarea { min-height: 9rem; resize: vertical; }
+  .contact-form button { font: inherit; justify-self: start; padding: 0.6rem 1.2rem; cursor: pointer; }
+  .contact-form button:disabled { opacity: 0.6; cursor: wait; }
+  /* Honeypot : hors écran plutôt que type="hidden", que les bots savent ignorer. */
+  .contact-form .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .contact-status:empty { display: none; }
+</style>
+
+<form class="contact-form" id="contact-form" novalidate>
+  <label>
+    Nom
+    <input name="name" type="text" autocomplete="name" required maxlength="100">
+  </label>
+
+  <label>
+    Adresse e-mail
+    <input name="email" type="email" autocomplete="email" required maxlength="254">
+  </label>
+
+  <label>
+    Message
+    <textarea name="message" required minlength="10" maxlength="5000"></textarea>
+  </label>
+
+  <div class="hp" aria-hidden="true">
+    <label>Ne pas remplir <input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+  </div>
+
+  <button type="submit">Envoyer le message</button>
+  <p class="contact-status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  (() => {
+    const form = document.getElementById("contact-form");
+    const status = form.querySelector(".contact-status");
+    const button = form.querySelector("button");
+    let token = null;
+
+    // Jeton signé récupéré au chargement : il prouve que la page a été affichée.
+    fetch("/api/contact/token")
+      .then((r) => r.json())
+      .then((d) => { token = d.token; })
+      .catch(() => {});
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      button.disabled = true;
+      status.textContent = "Envoi en cours…";
+
+      const data = Object.fromEntries(new FormData(form));
+      try {
+        const res = await fetch("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, token }),
+        });
+        const result = await res.json().catch(() => ({}));
+
+        if (res.ok && result.ok) {
+          form.reset();
+          status.textContent = "Message envoyé. Je vous réponds dès que possible.";
+        } else if (res.status === 429) {
+          status.textContent = "Trop d’envois rapprochés. Réessayez dans une minute.";
+        } else {
+          status.textContent = result.error || "L’envoi a échoué. Réessayez dans quelques minutes.";
+        }
+      } catch {
+        status.textContent = "Connexion impossible. Vérifiez votre réseau puis réessayez.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  })();
+</script>

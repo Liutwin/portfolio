@@ -1,0 +1,9 @@
+services:
+  contact:
+    image: ghcr.io/liutwin/portfolio-contact:latest
+    ports:
+      # 127.0.0.1 : seul le Nginx de l'hôte peut joindre le conteneur.
+      - "127.0.0.1:8010:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
