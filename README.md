@@ -1,13 +1,13 @@
-# Formulaire de contact — portfolio liutwin.com
+# Portfolio liutwin.com
 
-Le site reste statique (servi par le Nginx de l’hôte). Seul l’endpoint de contact tourne dans un conteneur Deno, joignable uniquement en local.
+Le site est statique : c’est le Nginx de l’hôte qui le sert. Seul l’endpoint du formulaire de contact tourne dans un conteneur Deno, joignable uniquement en local.
 
 ```
-navigateur ──HTTPS──▶ Nginx (hôte) ──┬── /            → /srv/portfolio/frontend (dossier frontend/)
+navigateur ──HTTPS──▶ Nginx (hôte) ──┬── /            → /srv/portfolio/frontend
                                      └── /api/contact → 127.0.0.1:8010 → conteneur Deno ──SMTP──▶ contact@liutwin.com
 ```
 
-Le formulaire de la page récupère un jeton via `GET /api/contact/token`, puis envoie le nom, l’adresse de réponse et le message à `POST /api/contact`. Le lien e-mail est recomposé par JavaScript pour décourager les robots les plus rudimentaires ; les robots qui exécutent JavaScript peuvent tout de même le récupérer. Pour réduire les spams, privilégier le formulaire et appliquer un filtre anti-spam à la boîte de réception.
+Le formulaire récupère un jeton via `GET /api/contact/token`, puis envoie le nom, l’adresse de réponse et le message à `POST /api/contact`. L’adresse `contact@liutwin.com` n’apparaît nulle part dans la page.
 
 ## Protections anti-spam
 
@@ -22,25 +22,47 @@ Le formulaire de la page récupère un jeton via `GET /api/contact/token`, puis 
 ## Développement local
 
 ```bash
-cp .env.example .env        # puis remplir
+cp .env.example .env        # local uniquement ; en production, le .env est généré par le workflow
 cd backend
 deno task test              # 6 tests, sans SMTP réel
-deno task dev               # http://localhost:8000
+deno task dev               # site complet + formulaire sur http://localhost:8000
 ```
 
-## Déploiement sur le VPS
+En mode `dev`, le backend sert aussi le dossier `frontend/`, comme Nginx en production. Avec les vrais identifiants SMTP dans `.env`, le formulaire envoie de vrais mails ; avec un mot de passe bidon, il répond « L’envoi a échoué », ce qui suffit pour tester le reste.
 
-1. DNS chez le registrar : A `@` et `www` → IP du VPS, plus les MX, SPF, DKIM et DMARC fournis par l’hébergeur mail.
-2. Répertoire : `sudo mkdir -p /srv/portfolio/frontend && sudo chown -R liutwin:liutwin /srv/portfolio`, y copier le contenu de `frontend/` et `docker-compose.yml`.
-3. `.env` : copier `.env.example`, générer `TOKEN_SECRET` avec `openssl rand -hex 32`, renseigner le mot de passe SMTP.
-4. Nginx :
+## Déploiement
+
+Un seul workflow, `.github/workflows/deploy.yml`, déclenché à chaque push sur `main` (ou à la main depuis l’onglet Actions) :
+
+1. **test** : `deno task test` ;
+2. **build** : image du backend poussée sur `ghcr.io/liutwin/portfolio-backend` ;
+3. **deploy** : copie de `docker-compose.yml`, `rsync` de `frontend/` vers `/srv/portfolio/frontend`, génération du `.env` à partir des secrets, puis `docker compose pull && up -d`.
+
+### Mise en place (une seule fois)
+
+1. **DNS** chez le registrar : A `@` et `www` → IP du VPS, plus les MX, SPF, DKIM et DMARC fournis par l’hébergeur mail.
+2. **Répertoire** sur le VPS :
+   ```bash
+   sudo mkdir -p /srv/portfolio/frontend && sudo chown -R liutwin:liutwin /srv/portfolio
+   ```
+3. **Nginx** :
    ```bash
    sudo cp nginx/limit-contact.conf /etc/nginx/conf.d/
    sudo cp nginx/liutwin.com /etc/nginx/sites-available/
    sudo ln -s /etc/nginx/sites-available/liutwin.com /etc/nginx/sites-enabled/
    sudo nginx -t && sudo systemctl reload nginx
    ```
-5. HTTPS : `sudo certbot --nginx -d liutwin.com -d www.liutwin.com`
-6. Image : construite et poussée sur ghcr.io par GitHub Actions (même workflow que les autres projets, contexte `./backend`), puis `docker compose pull && docker compose up -d`.
-7. Vérifier : `curl https://liutwin.com/api/contact/token` renvoie un jeton, puis envoyer un message depuis le site. Les rejets apparaissent dans `docker compose logs -f` avec le préfixe `[spam]`.
-# portfolio
+4. **HTTPS** : `sudo certbot --nginx -d liutwin.com -d www.liutwin.com`
+5. **Secrets GitHub** (*Settings → Secrets and variables → Actions*) :
+
+   | Secret | Valeur |
+   |---|---|
+   | `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT` | mêmes valeurs que pour les autres projets |
+   | `TOKEN_SECRET` | sortie de `openssl rand -hex 32` |
+   | `SMTP_HOST`, `SMTP_PORT` | `ssl0.ovh.net` et `465` (OVH) |
+   | `SMTP_USER`, `SMTP_PASSWORD` | identifiants de `contact@liutwin.com` |
+   | `MAIL_TO` | boîte qui reçoit les messages |
+
+   Puis, dans *Settings → Actions → General*, cocher *Read and write permissions*.
+6. **Premier déploiement** : pousser, ou lancer le workflow à la main.
+7. **Vérifier** : `curl https://liutwin.com/api/contact/token` renvoie un jeton, puis envoyer un message depuis le site. Les rejets apparaissent dans `docker compose logs -f` avec le préfixe `[spam]`, et `sudo ss -tlnp | grep 8010` ne doit montrer que `127.0.0.1`.

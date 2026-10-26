@@ -1,0 +1,108 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  PROJECT_PATH: /srv/portfolio
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.2.12
+      - run: deno task test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set image name lowercase
+        run: echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Le frontend est statique : pas d'image, il est copié tel quel au déploiement.
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Copy docker-compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: "docker-compose.yml"
+          target: ${{ env.PROJECT_PATH }}/
+
+      # --delete : un fichier supprimé du dépôt disparaît aussi du serveur.
+      - name: Sync frontend
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}" \
+            frontend/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ env.PROJECT_PATH }}/frontend/"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,PROJECT_PATH
+          script: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            cd "$PROJECT_PATH"
+
+            # Générer le .env avec les secrets ('EOF' entre guillemets : un $ dans
+            # un mot de passe n'est pas interprété par le shell du VPS)
+            cat > .env <<'EOF'
+            PORT=8000
+            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+            MAIL_TO=${{ secrets.MAIL_TO }}
+            EOF
+            chmod 600 .env
+
+            docker compose pull
+            docker compose up -d
+            docker image prune -f

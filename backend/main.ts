@@ -131,6 +131,35 @@ async function handleContact(req: Request): Promise<Response> {
   }
 }
 
+// --- Mode développement : sert aussi le site statique -------------------------
+// Actif seulement si STATIC_DIR est défini (deno task dev). En production,
+// c'est le Nginx de l'hôte qui sert le site et cette partie ne sert pas.
+
+const STATIC_DIR = Deno.env.get("STATIC_DIR");
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".pdf": "application/pdf",
+};
+
+async function serveStatic(pathname: string): Promise<Response> {
+  const path = decodeURIComponent(pathname).replace(/\/$/, "/index.html");
+  if (path.includes("..")) return new Response("Interdit", { status: 403 });
+  try {
+    const file = await Deno.readFile(`${STATIC_DIR}${path}`);
+    const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
+    return new Response(file, { headers: { "content-type": MIME[ext] ?? "application/octet-stream" } });
+  } catch {
+    return new Response("Introuvable", { status: 404 });
+  }
+}
+
 export async function handler(req: Request): Promise<Response> {
   const { pathname } = new URL(req.url);
   if (pathname === "/api/contact/token" && req.method === "GET") {
@@ -138,6 +167,7 @@ export async function handler(req: Request): Promise<Response> {
   }
   if (pathname === "/api/contact" && req.method === "POST") return handleContact(req);
   if (pathname === "/api/health") return json(200, { ok: true });
+  if (STATIC_DIR && req.method === "GET" && !pathname.startsWith("/api/")) return serveStatic(pathname);
   return json(404, { ok: false, error: "Introuvable." });
 }
 
