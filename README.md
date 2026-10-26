@@ -7,6 +7,8 @@ navigateur ──HTTPS──▶ Nginx (hôte) ──┬── /            → /
                                      └── /api/contact → 127.0.0.1:8010 → conteneur Deno ──SMTP──▶ contact@liutwin.com
 ```
 
+Le formulaire de la page récupère un jeton via `GET /api/contact/token`, puis envoie le nom, l’adresse de réponse et le message à `POST /api/contact`. Le lien e-mail est recomposé par JavaScript pour décourager les robots les plus rudimentaires ; les robots qui exécutent JavaScript peuvent tout de même le récupérer. Pour réduire les spams, privilégier le formulaire et appliquer un filtre anti-spam à la boîte de réception.
+
 ## Protections anti-spam
 
 | Couche | Où | Effet |
