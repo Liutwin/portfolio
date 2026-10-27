@@ -97,6 +97,7 @@ jobs:
             TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
             SMTP_HOST=${{ secrets.SMTP_HOST }}
             SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_SECURE=${{ secrets.SMTP_SECURE }}
             SMTP_USER=${{ secrets.SMTP_USER }}
             SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
             MAIL_TO=${{ secrets.MAIL_TO }}

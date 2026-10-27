@@ -59,9 +59,11 @@ Un seul workflow, `.github/workflows/deploy.yml`, déclenché à chaque push sur
    |---|---|
    | `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT` | mêmes valeurs que pour les autres projets |
    | `TOKEN_SECRET` | sortie de `openssl rand -hex 32` |
-   | `SMTP_HOST`, `SMTP_PORT` | `ssl0.ovh.net` et `465` (OVH) |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | `ssl0.ovh.net`, `465` et `true` (OVH) |
    | `SMTP_USER`, `SMTP_PASSWORD` | identifiants de `contact@liutwin.com` |
    | `MAIL_TO` | boîte qui reçoit les messages |
+
+   `SMTP_SECURE` accepte `true` ou `false`. S'il est absent ou vide, le backend utilise `true` uniquement avec le port `465`.
 
    Puis, dans *Settings → Actions → General*, cocher *Read and write permissions*.
 6. **Premier déploiement** : pousser, ou lancer le workflow à la main.

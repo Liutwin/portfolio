@@ -13,6 +13,18 @@ const TOKEN_SECRET = env("TOKEN_SECRET");
 const MAIL_TO = env("MAIL_TO");
 const SMTP_USER = env("SMTP_USER");
 const SMTP_PORT = Number(env("SMTP_PORT"));
+const smtpSecureSetting = Deno.env.get("SMTP_SECURE")?.trim().toLowerCase();
+
+if (
+  smtpSecureSetting && smtpSecureSetting !== "true" &&
+  smtpSecureSetting !== "false"
+) {
+  throw new Error("SMTP_SECURE doit valoir true ou false.");
+}
+
+const SMTP_SECURE = smtpSecureSetting
+  ? smtpSecureSetting === "true"
+  : SMTP_PORT === 465;
 
 const MIN_DELAY_MS = 3_000; // soumis en moins de 3 s → bot
 const MAX_AGE_MS = 2 * 60 * 60 * 1_000; // jeton valable 2 h
@@ -21,7 +33,7 @@ const MAX_LINKS = 2;
 const transporter = nodemailer.createTransport({
   host: env("SMTP_HOST"),
   port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
+  secure: SMTP_SECURE,
   auth: { user: SMTP_USER, pass: env("SMTP_PASSWORD") },
 });
 
