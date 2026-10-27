@@ -34,6 +34,8 @@
 .devops-badge { border-color: rgba(16, 185, 129, .3); }
 .education-sysadmin { color: #fcd34d; }
 .education-frontend { color: #7dd3fc; }
+.sysadmin-badge { color: #fcd34d; background: rgba(245, 158, 11, .12); border-color: rgba(245, 158, 11, .3); }
+.cv-download { padding-block: .5rem; }
 .tech-tag-tools { color: #d1d5db; background: rgba(156, 163, 175, .12); border-color: rgba(156, 163, 175, .35); }
 .tech-tag-graphics { color: #c4b5fd; background: rgba(139, 92, 246, .12); border-color: rgba(139, 92, 246, .35); }
 .experience-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: .75rem; row-gap: .25rem; margin-bottom: .25rem; }
@@ -103,7 +105,7 @@ Je suis développeur logiciel, fort de plusieurs années d’expérience chez Ar
 <ol class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-10 text-xs sm:text-sm" aria-label="Axes prioritaires">
 <li class="px-3.5 py-1.5 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30 font-medium">1. Ingénierie logicielle</li>
 <li class="px-3.5 py-1.5 rounded-lg bg-accent-emerald/20 text-accent-emerald border devops-badge font-medium">2. DevOps &amp; CI/CD</li>
-<li class="px-3.5 py-1.5 rounded-lg bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30 font-medium">3. Administration systèmes &amp; réseaux</li>
+<li class="px-3.5 py-1.5 rounded-lg border sysadmin-badge font-medium">3. Administration systèmes &amp; réseaux</li>
 </ol>
 <div class="flex flex-wrap items-center justify-center gap-4 mb-12">
 <a href="#projects" class="px-7 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors shadow-lg shadow-brand-600/25 flex items-center gap-2">
@@ -116,6 +118,7 @@ Je suis développeur logiciel, fort de plusieurs années d’expérience chez Ar
 <ul class="flex items-center justify-center gap-2 sm:gap-6 text-gray-400" aria-label="Liens">
 <li><a href="https://www.linkedin.com/in/liutwin" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors p-2 rounded-lg hover:bg-gray-800/50 flex items-center gap-2 text-sm" aria-label="LinkedIn"><svg class="ic w-5 h-5" aria-hidden="true"><use href="#i-linkedin"/></svg><span class="hidden sm:inline">LinkedIn</span></a></li>
 <li><a href="https://github.com/liutwin" target="_blank" rel="noopener" class="hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800/50 flex items-center gap-2 text-sm" aria-label="GitHub"><svg class="ic w-5 h-5" aria-hidden="true"><use href="#i-github"/></svg><span class="hidden sm:inline">GitHub</span></a></li>
+<li><a href="mailto:contact@liutwin.com" class="hover:text-brand-400 transition-colors p-2 rounded-lg hover:bg-gray-800/50 flex items-center gap-2 text-sm" aria-label="Envoyer un e-mail à contact@liutwin.com"><svg class="ic w-5 h-5" aria-hidden="true"><use href="#i-mail"/></svg><span class="hidden sm:inline">Email</span></a></li>
 <li><a href="https://www.artstation.com/liutwin" target="_blank" rel="noopener" class="hover:text-accent-cyan transition-colors p-2 rounded-lg hover:bg-gray-800/50 flex items-center gap-2 text-sm" aria-label="ArtStation"><svg class="ic w-5 h-5" aria-hidden="true"><use href="#i-palette"/></svg><span class="hidden sm:inline">ArtStation</span></a></li>
 </ul>
 </div>
@@ -136,7 +139,7 @@ Après plusieurs années d’expérience chez Thales, Sopra Steria, Orange et Ar
 <li class="flex items-center gap-2"><svg class="ic w-4 h-4 text-brand-500 shrink-0" aria-hidden="true"><use href="#i-map-pin"/></svg>Région brestoise (29) – Permis B, véhiculé</li>
 <li class="flex items-center gap-2"><svg class="ic w-4 h-4 text-accent-cyan shrink-0" aria-hidden="true"><use href="#i-languages"/></svg>Anglais technique (niveau B2)</li>
 </ul>
-<a href="assets/CV.pdf" download="CV-Liutwin-Piernet.pdf" class="mt-6 inline-flex items-center justify-center px-5 py-5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm transition-colors">Télécharger mon CV (PDF)</a>
+<a href="assets/CV.pdf" download="CV-Liutwin-Piernet.pdf" class="cv-download mt-6 inline-flex items-center justify-center px-5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm transition-colors">Télécharger mon CV (PDF)</a>
 </div>
 </div>
 <div class="lg:col-span-7 flex flex-col">
@@ -524,6 +527,7 @@ stageboisbretagne.com <svg class="ic w-4 h-4" aria-hidden="true"><use href="#i-e
 </form>
 <a href="https://www.linkedin.com/in/liutwin" target="_blank" rel="noopener" class="mt-6 inline-flex items-center justify-center gap-2 text-sm text-gray-300 hover:text-brand-400"><svg class="ic w-4 h-4" aria-hidden="true"><use href="#i-linkedin"/></svg>Me retrouver sur LinkedIn</a>
 <div class="mt-6 pt-6 border-t border-gray-800/80 text-xs text-gray-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+<a href="mailto:contact@liutwin.com" class="flex items-center gap-2 hover:text-white" aria-label="Envoyer un e-mail à contact@liutwin.com"><svg class="ic w-3.5 h-3.5" aria-hidden="true"><use href="#i-mail"/></svg>contact@liutwin.com</a>
 <span class="flex items-center gap-2"><svg class="ic w-3.5 h-3.5" aria-hidden="true"><use href="#i-map-pin"/></svg>Région brestoise (Finistère)</span>
 </div>
 </div>
